@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tasks - Community Help</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/my-tasks.css">
+</head>
+<body data-theme="<%= user.theme || 'neutral' %>">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <h1>Community Help</h1>
+                    <p><%= user.city %></p>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/browse" class="nav-link">Browse Tasks</a></li>
+                <li><a href="/create-task" class="nav-link">Create Task</a></li>
+                <li><a href="/my-tasks" class="nav-link active">My Tasks</a></li>
+                <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="my-tasks-header">
+            <h1>My Tasks</h1>
+            <p>Manage your posted tasks</p>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+
+        <% if (tasks && tasks.length > 0) { %>
+            <div class="tasks-table">
+                <div class="table-header">
+                    <div class="col-title">Task</div>
+                    <div class="col-status">Status</div>
+                    <div class="col-pay">Payment</div>
+                    <div class="col-date">Posted</div>
+                    <div class="col-actions">Actions</div>
+                </div>
+
+                <% tasks.forEach(task => { %>
+                    <div class="table-row" data-status="<%= task.status %>">
+                        <div class="col-title">
+                            <a href="/tasks/<%= task.id %>" class="task-link"><%= task.title %></a>
+                            <p class="task-category"><%= task.category || 'General' %></p>
+                        </div>
+                        <div class="col-status">
+                            <span class="status status-<%= task.status %>"><%= task.status.charAt(0).toUpperCase() + task.status.slice(1) %></span>
+                        </div>
+                        <div class="col-pay">
+                            <% if (task.pay) { %>
+                                $<%= task.pay.toFixed(2) %>
+                            <% } else { %>
+                                Free
+                            <% } %>
+                        </div>
+                        <div class="col-date">
+                            <%= new Date(task.created_at).toLocaleDateString() %>
+                        </div>
+                        <div class="col-actions">
+                            <a href="/tasks/<%= task.id %>" class="btn-action">View</a>
+                            <% if (task.status === 'open') { %>
+                                <button class="btn-action btn-close" data-task-id="<%= task.id %>">Close</button>
+                            <% } %>
+                            <button class="btn-action btn-delete" data-task-id="<%= task.id %>">Delete</button>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="no-tasks-card">
+                <p>You haven't created any tasks yet.</p>
+                <a href="/create-task" class="btn btn-primary">Create Your First Task</a>
+            </div>
+        <% } %>
+    </div>
+
+    <script src="/js/my-tasks.js"></script>
+</body>
+</html>

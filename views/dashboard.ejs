@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Community Help</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body data-theme="<%= user.theme || 'neutral' %>">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <h1>Community Help</h1>
+                    <p><%= user.city %></p>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/browse" class="nav-link">Browse Tasks</a></li>
+                <li><a href="/create-task" class="nav-link">Create Task</a></li>
+                <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
+                <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h2>Welcome, <%= user.name %>!</h2>
+            <p>Posted from <%= user.city %></p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Browse Tasks</h3>
+                <p>Check out tasks from people in your city and beyond.</p>
+                <a href="/browse" class="btn btn-primary">Start Browsing</a>
+            </div>
+
+            <div class="card">
+                <h3>Create a Task</h3>
+                <p>Post a task and let others help you out.</p>
+                <a href="/create-task" class="btn btn-primary">Create Task</a>
+            </div>
+
+            <div class="card">
+                <h3>My Tasks</h3>
+                <p>View and manage your posted tasks.</p>
+                <a href="/my-tasks" class="btn btn-primary">View Tasks</a>
+            </div>
+
+            <div class="card">
+                <h3>My Profile</h3>
+                <p>Update your profile information.</p>
+                <a href="/profile" class="btn btn-primary">Edit Profile</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

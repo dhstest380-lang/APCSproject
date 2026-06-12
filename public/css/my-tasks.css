@@ -1,0 +1,262 @@
+/* My Tasks Header */
+.my-tasks-header {
+    margin-bottom: 30px;
+}
+
+.my-tasks-header h1 {
+    color: var(--text-color);
+    margin-bottom: 8px;
+    font-size: 32px;
+}
+
+.my-tasks-header p {
+    color: var(--muted-color);
+    margin: 0;
+}
+
+/* Tasks Table */
+.tasks-table {
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr 1.2fr;
+    gap: 20px;
+    padding: 20px;
+    background-color: var(--surface-strong);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr 1.2fr;
+    gap: 20px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.table-row:hover {
+    background-color: var(--surface-strong);
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+/* Table Columns */
+.col-title {
+    flex: 1;
+}
+
+.task-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 4px;
+    transition: color 0.3s ease;
+}
+
+.task-link:hover {
+    color: var(--primary-hover);
+}
+
+.task-category {
+    color: var(--muted-color);
+    font-size: 12px;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.col-status,
+.col-pay,
+.col-date {
+    text-align: left;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.col-date {
+    color: var(--muted-color);
+}
+
+.col-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Status */
+.status {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-open {
+    background-color: var(--success-bg);
+    color: var(--success-color);
+}
+
+.status-closed {
+    background-color: var(--error-bg);
+    color: var(--error-color);
+}
+
+/* Action Buttons */
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    background-color: var(--surface-strong);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-action:hover {
+    background-color: var(--surface);
+}
+
+.btn-action:active {
+    transform: scale(0.98);
+}
+
+.btn-close {
+    background-color: var(--warning-bg);
+    color: var(--warning-color);
+}
+
+.btn-close:hover {
+    background-color: rgba(251, 191, 36, 0.18);
+}
+
+.btn-delete {
+    background-color: var(--error-bg);
+    color: var(--error-color);
+}
+
+.btn-delete:hover {
+    background-color: rgba(251, 113, 133, 0.18);
+}
+
+/* No Tasks Card */
+.no-tasks-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.no-tasks-card p {
+    color: #999;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .table-header,
+    .table-row {
+        grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    }
+
+    .col-date {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-header,
+    .table-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .col-title {
+        grid-column: 1 / 2;
+    }
+
+    .col-status,
+    .col-pay,
+    .col-date {
+        grid-column: 2 / 3;
+        text-align: right;
+    }
+
+    .col-date {
+        display: block;
+    }
+
+    .col-actions {
+        grid-column: 1 / 3;
+        flex-wrap: wrap;
+    }
+
+    .table-row {
+        padding: 15px;
+    }
+
+    .my-tasks-header h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-header {
+        display: none;
+    }
+
+    .table-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .table-row::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #999;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .col-title,
+    .col-status,
+    .col-pay,
+    .col-date,
+    .col-actions {
+        grid-column: 1;
+    }
+
+    .col-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+}

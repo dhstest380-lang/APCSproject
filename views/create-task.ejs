@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Task - Community Help</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/form.css">
+</head>
+<body data-theme="<%= user.theme || 'neutral' %>">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <h1>Community Help</h1>
+                    <p><%= user.city %></p>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/browse" class="nav-link">Browse Tasks</a></li>
+                <li><a href="/create-task" class="nav-link active">Create Task</a></li>
+                <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
+                <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h1>Create a New Task</h1>
+            <p class="subtitle">Share what you need done or offer your services in <%= user.city %></p>
+
+            <form id="createTaskForm" class="form">
+                <div class="form-group">
+                    <label for="title">Task Title *</label>
+                    <input 
+                        type="text" 
+                        id="title" 
+                        name="title" 
+                        placeholder="e.g., Need help with math homework"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description *</label>
+                    <textarea 
+                        id="description" 
+                        name="description" 
+                        rows="5"
+                        placeholder="Describe what you need help with..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <input 
+                            type="text" 
+                            id="category" 
+                            name="category" 
+                            placeholder="e.g., Tutoring, Help with Project, Job"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pay">Pay (Optional)</label>
+                        <input 
+                            type="number" 
+                            id="pay" 
+                            name="pay" 
+                            placeholder="Leave empty for unpaid"
+                            step="0.01"
+                            min="0"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-info">
+                    <p><strong>Your Location:</strong> <%= user.city %></p>
+                    <p class="text-muted">This task will be visible to people in <%= user.city %> and beyond.</p>
+                </div>
+
+                <div id="alertBox" class="alert-container"></div>
+
+                <button type="submit" class="btn btn-primary btn-large">Create Task</button>
+                <a href="/dashboard" class="btn btn-secondary btn-large">Cancel</a>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/create-task.js"></script>
+</body>
+</html>

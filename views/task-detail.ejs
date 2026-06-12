@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Details - Community Help</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/task-detail.css">
+    <link rel="stylesheet" href="/css/modal.css">
+</head>
+<body data-theme="<%= user.theme || 'neutral' %>">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <h1>Community Help</h1>
+                    <p><%= user.city %></p>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/browse" class="nav-link">Browse Tasks</a></li>
+                <li><a href="/create-task" class="nav-link">Create Task</a></li>
+                <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
+                <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="/browse" class="back-link">← Back to Browse</a>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } else if (task) { %>
+            <div class="task-detail">
+                <div class="task-detail-header">
+                    <div>
+                        <h1><%= task.title %></h1>
+                        <p class="task-category"><%= task.category || 'General' %></p>
+                    </div>
+                    <div class="task-detail-pay">
+                        <% if (task.pay) { %>
+                            <div class="price">$<%= task.pay.toFixed(2) %></div>
+                        <% } else { %>
+                            <div class="price free">Free</div>
+                        <% } %>
+                        <div class="status status-<%= task.status %>"><%= task.status.charAt(0).toUpperCase() + task.status.slice(1) %></div>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <button class="report-btn-large" id="reportTaskBtn" data-task-id="<%= task.id %>">
+                        🚩 Report Suspicious Listing (<%= task.report_count || 0 %>/5)
+                    </button>
+                    <p class="report-warning-large">⚠️ False reporting will lead to account termination</p>
+                </div>
+
+                <div class="task-detail-grid">
+                    <div class="task-detail-content">
+                        <div class="section">
+                            <h2>Description</h2>
+                            <p class="description-text"><%= task.description %></p>
+                        </div>
+
+                        <div class="section">
+                            <h2>Details</h2>
+                            <div class="details-list">
+                                <div class="detail-item">
+                                    <span class="label">Location</span>
+                                    <span class="value">📍 <%= task.city %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Posted On</span>
+                                    <span class="value"><%= new Date(task.created_at).toLocaleDateString() %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Status</span>
+                                    <span class="value"><%= task.status.charAt(0).toUpperCase() + task.status.slice(1) %></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="task-detail-sidebar">
+                        <div class="card">
+                            <h3>Posted By</h3>
+                            <div class="creator-info">
+                                <p class="creator-name"><%= task.creator_name %></p>
+                                <p class="creator-email"><%= task.creator_email %></p>
+                            </div>
+
+                            <% if (user.id === task.creator_id) { %>
+                                <button class="btn btn-primary btn-block" id="closeTaskBtn">Close Task</button>
+                                <button class="btn btn-danger btn-block" id="deleteTaskBtn">Delete Task</button>
+                            <% } else { %>
+                                <a href="mailto:<%= task.creator_email %>" class="btn btn-primary btn-block">Contact Creator</a>
+                            <% } %>
+                        </div>
+
+                        <div class="card">
+                            <h3>Task Info</h3>
+                            <ul class="info-list">
+                                <li>
+                                    <span>Status</span>
+                                    <span class="status-badge status-<%= task.status %>"><%= task.status %></span>
+                                </li>
+                                <li>
+                                    <span>Payment</span>
+                                    <span><% if (task.pay) { %>$<%= task.pay.toFixed(2) %><% } else { %>Free<% } %></span>
+                                </li>
+                                <li>
+                                    <span>Category</span>
+                                    <span><%= task.category || 'General' %></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Report Suspicious Listing</h2>
+                <button class="modal-close" id="closeReportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-warning">⚠️ <strong>False reporting will result in account termination</strong></p>
+                <div class="form-group">
+                    <label for="reportReason">Reason for Report *</label>
+                    <select id="reportReason" required>
+                        <option value="">Select a reason</option>
+                        <option value="Spam">Spam or Scam</option>
+                        <option value="Inappropriate Content">Inappropriate Content</option>
+                        <option value="Harassment">Harassment or Threats</option>
+                        <option value="Illegal Activity">Illegal Activity</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reportDetails">Additional Details</label>
+                    <textarea id="reportDetails" placeholder="Please provide any additional information..." rows="4"></textarea>
+                </div>
+                <div id="reportError" class="alert alert-error" style="display: none;"></div>
+                <div id="reportSuccess" class="alert alert-success" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelReport" class="btn btn-secondary">Cancel</button>
+                <button id="submitReport" class="btn btn-danger">Submit Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/task-detail.js"></script>
+</body>
+</html>

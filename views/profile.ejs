@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Community Help</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/form.css">
+</head>
+<body data-theme="<%= user.theme || 'neutral' %>">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <h1>Community Help</h1>
+                    <p><%= user.city %></p>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/browse" class="nav-link">Browse Tasks</a></li>
+                <li><a href="/create-task" class="nav-link">Create Task</a></li>
+                <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
+                <li><a href="/profile" class="nav-link active">Profile</a></li>
+                <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h1>Your Profile</h1>
+            <p class="subtitle">View your account information</p>
+
+            <div class="profile-info">
+                <div class="info-item">
+                    <label>Full Name</label>
+                    <p class="value"><%= user.name %></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Email</label>
+                    <p class="value"><%= user.email %></p>
+                </div>
+
+                <div class="info-item">
+                    <label>City</label>
+                    <p class="value"><%= user.city %></p>
+                </div>
+
+                <div class="info-item">
+                    <label>Email Verified</label>
+                    <p class="value">
+                        <% if (user.email_verified) { %>
+                            <span class="badge badge-success">✓ Verified</span>
+                        <% } else { %>
+                            <span class="badge badge-warning">⚠ Not Verified</span>
+                        <% } %>
+                    </p>
+                </div>
+
+                <div class="info-item">
+                    <label>Member Since</label>
+                    <p class="value"><%= new Date(user.created_at).toLocaleDateString() %></p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="theme-select">Theme</label>
+                <select id="theme-select" class="theme-select">
+                    <option value="light" <%= user.theme === 'light' ? 'selected' : '' %>>Light</option>
+                    <option value="dark" <%= user.theme === 'dark' ? 'selected' : '' %>>Dark</option>
+                    <option value="neutral" <%= (!user.theme || user.theme === 'neutral') ? 'selected' : '' %>>Neutral</option>
+                </select>
+            </div>
+
+            <div class="profile-actions">
+                <button id="save-theme-btn" class="btn btn-primary">Save Theme</button>
+                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+    <script src="/js/profile.js"></script>
+</body>
+</html>
