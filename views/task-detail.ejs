@@ -22,6 +22,10 @@
                 <li><a href="/create-task" class="nav-link">Create Task</a></li>
                 <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
                 <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/messages" class="nav-link messages-link" title="View messages">
+                    📬 Messages
+                    <span class="message-badge" id="messageBadge" style="display: none;"></span>
+                </a></li>
                 <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
             </ul>
         </div>
@@ -71,8 +75,20 @@
                                     <span class="value">📍 <%= task.city %></span>
                                 </div>
                                 <div class="detail-item">
+                                    <span class="label">Task Address</span>
+                                    <span class="value">📌 <%= task.address || 'Not specified' %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">People Needed</span>
+                                    <span class="value">👥 <span id="claimsProgress"><%= task.people_needed %></span></span>
+                                </div>
+                                <div class="detail-item">
                                     <span class="label">Posted On</span>
-                                    <span class="value"><%= new Date(task.created_at).toLocaleDateString() %></span>
+                                    <span class="value">📅 <%= new Date(task.created_at).toLocaleDateString() %></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Posted At</span>
+                                    <span class="value">🕐 <%= new Date(task.created_at).toLocaleTimeString() %></span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="label">Status</span>
@@ -94,7 +110,10 @@
                                 <button class="btn btn-primary btn-block" id="closeTaskBtn">Close Task</button>
                                 <button class="btn btn-danger btn-block" id="deleteTaskBtn">Delete Task</button>
                             <% } else { %>
-                                <a href="mailto:<%= task.creator_email %>" class="btn btn-primary btn-block">Contact Creator</a>
+                                <button class="btn btn-primary btn-block" id="claimTaskBtn" data-task-id="<%= task.id %>">
+                                    📋 Claim Task
+                                </button>
+                                <a href="mailto:<%= task.creator_email %>" class="btn btn-secondary btn-block">📧 Contact Creator</a>
                             <% } %>
                         </div>
 

@@ -1,5 +1,6 @@
 const closeTaskBtn = document.getElementById('closeTaskBtn');
 const deleteTaskBtn = document.getElementById('deleteTaskBtn');
+const claimTaskBtn = document.getElementById('claimTaskBtn');
 const reportTaskBtn = document.getElementById('reportTaskBtn');
 const reportModal = document.getElementById('reportModal');
 const closeReportModal = document.getElementById('closeReportModal');
@@ -9,7 +10,94 @@ const reportReason = document.getElementById('reportReason');
 const reportDetails = document.getElementById('reportDetails');
 const reportError = document.getElementById('reportError');
 const reportSuccess = document.getElementById('reportSuccess');
+const messageBadge = document.getElementById('messageBadge');
+const claimsProgress = document.getElementById('claimsProgress');
 const taskId = window.location.pathname.split('/').pop();
+
+// Update message badge
+async function updateMessageBadge() {
+    try {
+        const response = await fetch('/api/messages/unread');
+        const data = await response.json();
+        if (data.unread_count > 0) {
+            messageBadge.textContent = data.unread_count;
+            messageBadge.style.display = 'inline-block';
+        } else {
+            messageBadge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error fetching unread messages:', error);
+    }
+}
+
+// Load claim count
+async function loadClaimsCount() {
+    try {
+        const response = await fetch(`/api/tasks/${taskId}/claims`);
+        const data = await response.json();
+        claimsProgress.textContent = `${data.current_claims}/${data.people_needed}`;
+        
+        if (claimTaskBtn) {
+            if (data.current_claims >= data.people_needed) {
+                claimTaskBtn.disabled = true;
+                claimTaskBtn.textContent = '❌ Full';
+            }
+            
+            // Check if user has claimed
+            const claimResponse = await fetch(`/api/tasks/${taskId}/user-claim`);
+            const claimData = await claimResponse.json();
+            if (claimData.has_claimed) {
+                claimTaskBtn.textContent = '✓ Already Claimed';
+                claimTaskBtn.disabled = true;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading claims:', error);
+    }
+}
+
+// Claim task button
+if (claimTaskBtn) {
+    claimTaskBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/claim`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error || 'Error claiming task');
+                return;
+            }
+
+            alert(data.message);
+            
+            // Update UI
+            claimTaskBtn.textContent = '✓ Already Claimed';
+            claimTaskBtn.disabled = true;
+            
+            // Reload claim count
+            loadClaimsCount();
+            
+            // Update message badge
+            updateMessageBadge();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    });
+}
+
+// Initialize
+updateMessageBadge();
+loadClaimsCount();
+
+// Refresh badge every 30 seconds
+setInterval(updateMessageBadge, 30000);
 
 if (closeTaskBtn) {
     closeTaskBtn.addEventListener('click', async () => {

@@ -10,8 +10,100 @@ const reportReason = document.getElementById('reportReason');
 const reportDetails = document.getElementById('reportDetails');
 const reportError = document.getElementById('reportError');
 const reportSuccess = document.getElementById('reportSuccess');
+const claimBtns = document.querySelectorAll('.btn-claim');
+const messageBadge = document.getElementById('messageBadge');
 
 let currentTaskId = null;
+
+// Update message badge
+async function updateMessageBadge() {
+    try {
+        const response = await fetch('/api/messages/unread');
+        const data = await response.json();
+        if (data.unread_count > 0) {
+            messageBadge.textContent = data.unread_count;
+            messageBadge.style.display = 'inline-block';
+        } else {
+            messageBadge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error fetching unread messages:', error);
+    }
+}
+
+// Load claim counts and setup claim buttons
+async function setupClaimButtons() {
+    for (const btn of claimBtns) {
+        const taskId = btn.getAttribute('data-task-id');
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/claims`);
+            const data = await response.json();
+            const claimCountSpan = btn.querySelector('.claim-count');
+            claimCountSpan.textContent = `${data.current_claims}/${data.people_needed}`;
+            
+            // Disable if full
+            if (data.current_claims >= data.people_needed) {
+                btn.disabled = true;
+                btn.textContent = '❌ Full';
+            }
+            
+            // Check if user has claimed
+            const claimResponse = await fetch(`/api/tasks/${taskId}/user-claim`);
+            const claimData = claimResponse.json();
+            claimData.then(data => {
+                if (data.has_claimed) {
+                    btn.textContent = '✓ Claimed';
+                    btn.disabled = true;
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching claim count:', error);
+        }
+    }
+}
+
+// Claim task button functionality
+claimBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const taskId = btn.getAttribute('data-task-id');
+        
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/claim`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error || 'Error claiming task');
+                return;
+            }
+
+            // Update button
+            btn.textContent = '✓ Claimed';
+            btn.disabled = true;
+            
+            // Update message badge
+            updateMessageBadge();
+            
+            alert(data.message);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    });
+});
+
+// Initialize on page load
+updateMessageBadge();
+setupClaimButtons();
+
+// Refresh message badge every 30 seconds
+setInterval(updateMessageBadge, 30000);
 
 // Search and filter tasks
 function filterTasks() {

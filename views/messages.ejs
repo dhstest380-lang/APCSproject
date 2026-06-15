@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Community Help</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/modal.css">
+    <style>
+        .messages-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .messages-header {
+            margin-bottom: 2rem;
+        }
+
+        .messages-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary, #333);
+        }
+
+        .message-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .message-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        body[data-theme="dark"] .message-item {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
+        .message-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-item.unread {
+            background: #f0f7ff;
+            border-left: 4px solid #007bff;
+        }
+
+        body[data-theme="dark"] .message-item.unread {
+            background: #1a3a52;
+            border-left-color: #66b3ff;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .message-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary, #333);
+            margin: 0;
+        }
+
+        .message-time {
+            font-size: 0.85rem;
+            color: var(--text-secondary, #666);
+        }
+
+        .message-sender {
+            font-size: 0.9rem;
+            color: var(--text-secondary, #666);
+            margin-bottom: 0.75rem;
+        }
+
+        .message-content {
+            color: var(--text-primary, #333);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .message-footer {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .message-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        body[data-theme="dark"] .message-btn {
+            background: #3a3a3a;
+            border-color: #555;
+            color: #ddd;
+        }
+
+        .message-btn:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        body[data-theme="dark"] .message-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .no-messages {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary, #666);
+        }
+
+        .no-messages p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .mark-read-badge {
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        body[data-theme="dark"] .mark-read-badge {
+            background: #1a3a52;
+            color: #66b3ff;
+        }
+    </style>
+</head>
+<body data-theme="<%= user.theme || 'neutral' %>">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <h1>Community Help</h1>
+                    <p><%= user.city %></p>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/browse" class="nav-link">Browse Tasks</a></li>
+                <li><a href="/create-task" class="nav-link">Create Task</a></li>
+                <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
+                <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/messages" class="nav-link active messages-link" title="View messages">
+                    📬 Messages
+                    <span class="message-badge" id="messageBadge" style="display: none;"></span>
+                </a></li>
+                <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="messages-container">
+            <div class="messages-header">
+                <h1>📬 Your Messages</h1>
+                <p>Check who has claimed your tasks</p>
+            </div>
+
+            <div id="messagesAlert" class="alert-container"></div>
+
+            <ul class="message-list" id="messagesList">
+                <!-- Messages will be loaded here -->
+            </ul>
+
+            <div class="no-messages" id="noMessages" style="display: none;">
+                <p>No messages yet!</p>
+                <p>When someone claims one of your tasks, you'll see their message here.</p>
+                <a href="/browse" class="btn btn-primary">Browse Tasks</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesList = document.getElementById('messagesList');
+        const noMessages = document.getElementById('noMessages');
+        const messagesAlert = document.getElementById('messagesAlert');
+        const messageBadge = document.getElementById('messageBadge');
+
+        // Load messages
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/messages');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showAlert('Error loading messages', 'error');
+                    return;
+                }
+
+                if (data.messages.length === 0) {
+                    messagesList.style.display = 'none';
+                    noMessages.style.display = 'block';
+                } else {
+                    messagesList.style.display = 'block';
+                    noMessages.style.display = 'none';
+                    displayMessages(data.messages);
+                }
+
+                updateMessageBadge();
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('An error occurred. Please try again.', 'error');
+            }
+        }
+
+        function displayMessages(messages) {
+            messagesList.innerHTML = '';
+            messages.forEach(msg => {
+                const messageItem = document.createElement('li');
+                messageItem.className = `message-item ${msg.read ? '' : 'unread'}`;
+                messageItem.innerHTML = `
+                    <div class="message-header">
+                        <h3 class="message-title">${msg.title}</h3>
+                        <div>
+                            ${!msg.read ? '<span class="mark-read-badge">NEW</span>' : ''}
+                            <span class="message-time">${formatDate(msg.created_at)}</span>
+                        </div>
+                    </div>
+                    <div class="message-sender">From: <strong>${msg.sender_name}</strong></div>
+                    <div class="message-content">${msg.content}</div>
+                    <div class="message-footer">
+                        ${!msg.read ? `<button class="message-btn" onclick="markAsRead('${msg.id}')">Mark as Read</button>` : ''}
+                        <button class="message-btn" onclick="deleteMessage('${msg.id}')">Delete</button>
+                    </div>
+                `;
+                messagesList.appendChild(messageItem);
+            });
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        async function markAsRead(messageId) {
+            try {
+                const response = await fetch(`/api/messages/${messageId}/read`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadMessages();
+                } else {
+                    showAlert('Error marking message as read', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('An error occurred.', 'error');
+            }
+        }
+
+        async function deleteMessage(messageId) {
+            if (!confirm('Delete this message?')) return;
+
+            try {
+                const response = await fetch(`/api/messages/${messageId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadMessages();
+                } else {
+                    showAlert('Error deleting message', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('An error occurred.', 'error');
+            }
+        }
+
+        async function updateMessageBadge() {
+            try {
+                const response = await fetch('/api/messages/unread');
+                const data = await response.json();
+                if (data.unread_count > 0) {
+                    messageBadge.textContent = data.unread_count;
+                    messageBadge.style.display = 'inline-block';
+                } else {
+                    messageBadge.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching unread messages:', error);
+            }
+        }
+
+        function showAlert(message, type = 'error') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            messagesAlert.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Load messages on page load
+        loadMessages();
+    </script>
+</body>
+</html>

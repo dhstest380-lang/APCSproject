@@ -45,6 +45,8 @@ const createTablesSQL = `
     city TEXT NOT NULL,
     pay REAL,
     status TEXT DEFAULT 'open',
+    address TEXT,
+    people_needed INTEGER DEFAULT 1,
     report_count INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -60,6 +62,30 @@ const createTablesSQL = `
     FOREIGN KEY(task_id) REFERENCES tasks(id),
     FOREIGN KEY(reporter_id) REFERENCES users(id),
     UNIQUE(task_id, reporter_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS task_claims (
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(task_id) REFERENCES tasks(id),
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    UNIQUE(task_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    recipient_id TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    task_id TEXT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(recipient_id) REFERENCES users(id),
+    FOREIGN KEY(sender_id) REFERENCES users(id),
+    FOREIGN KEY(task_id) REFERENCES tasks(id)
   );
 `;
 

@@ -23,18 +23,19 @@ router.get('/create-task', isAuthenticated, (req, res) => {
 // Create a task
 router.post('/api/tasks', isAuthenticated, (req, res) => {
   try {
-    const { title, description, category, pay } = req.body;
+    const { title, description, category, pay, address, peopleNeeded } = req.body;
 
-    if (!title || !description) {
-      return res.status(400).json({ error: 'Title and description are required' });
+    if (!title || !description || !address || !peopleNeeded) {
+      return res.status(400).json({ error: 'Title, description, address, and people needed are required' });
     }
 
     const taskId = uuidv4();
     const pay_value = pay ? parseFloat(pay) : null;
+    const people_needed = parseInt(peopleNeeded) || 1;
 
     db.run(
-      'INSERT INTO tasks (id, creator_id, title, description, category, city, pay, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [taskId, req.user.id, title, description, category || 'General', req.user.city, pay_value, 'open'],
+      'INSERT INTO tasks (id, creator_id, title, description, category, city, pay, status, address, people_needed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [taskId, req.user.id, title, description, category || 'General', req.user.city, pay_value, 'open', address, people_needed],
       (err) => {
         if (err) {
           console.error('Error creating task:', err);
@@ -166,6 +167,11 @@ router.get('/profile', isAuthenticated, (req, res) => {
   res.render('profile', { user: req.user });
 });
 
+// Get messages page
+router.get('/messages', isAuthenticated, (req, res) => {
+  res.render('messages', { user: req.user });
+});
+
 // Update user theme preference
 router.post('/api/profile/theme', isAuthenticated, (req, res) => {
   const { theme } = req.body;
@@ -236,6 +242,218 @@ router.post('/api/tasks/:id/report', isAuthenticated, (req, res) => {
           });
         }
       );
+    }
+  );
+});
+
+// Claim a task
+router.post('/api/tasks/:id/claim', isAuthenticated, (req, res) => {
+  const { id } = req.params;
+  const claimId = uuidv4();
+  const messageId = uuidv4();
+
+  // Get task details
+  db.get(
+    'SELECT t.*, u.name as creator_name, u.email as creator_email FROM tasks t JOIN users u ON t.creator_id = u.id WHERE t.id = ?',
+    [id],
+    (err, task) => {
+      if (err) {
+        console.error('Error finding task:', err);
+        return res.status(500).json({ error: 'Error claiming task' });
+      }
+
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      if (task.creator_id === req.user.id) {
+        return res.status(400).json({ error: 'You cannot claim your own task' });
+      }
+
+      // Check if already claimed
+      db.get(
+        'SELECT * FROM task_claims WHERE task_id = ? AND user_id = ?',
+        [id, req.user.id],
+        (err, existingClaim) => {
+          if (err) {
+            console.error('Error checking claim:', err);
+            return res.status(500).json({ error: 'Error claiming task' });
+          }
+
+          if (existingClaim) {
+            return res.status(400).json({ error: 'You have already claimed this task' });
+          }
+
+          // Get current claims count
+          db.get(
+            'SELECT COUNT(*) as count FROM task_claims WHERE task_id = ?',
+            [id],
+            (err, result) => {
+              if (err) {
+                console.error('Error counting claims:', err);
+                return res.status(500).json({ error: 'Error claiming task' });
+              }
+
+              const currentClaims = result.count;
+              
+              // Check if task is full
+              if (currentClaims >= task.people_needed) {
+                return res.status(400).json({ error: 'This task has already received enough claims' });
+              }
+
+              // Insert claim
+              db.run(
+                'INSERT INTO task_claims (id, task_id, user_id) VALUES (?, ?, ?)',
+                [claimId, id, req.user.id],
+                (err) => {
+                  if (err) {
+                    console.error('Error creating claim:', err);
+                    return res.status(500).json({ error: 'Error claiming task' });
+                  }
+
+                  // Create message for task creator
+                  const messageTitle = `${req.user.name} claimed your task: ${task.title}`;
+                  const messageContent = `${req.user.name} has claimed your task "${task.title}". Task address: ${task.address}`;
+
+                  db.run(
+                    'INSERT INTO messages (id, recipient_id, sender_id, task_id, title, content, read) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [messageId, task.creator_id, req.user.id, id, messageTitle, messageContent, 0],
+                    (err) => {
+                      if (err) {
+                        console.error('Error creating message:', err);
+                        // Don't fail the claim, just log the error
+                      }
+
+                      res.json({ 
+                        success: true, 
+                        message: `Task claimed! (${currentClaims + 1}/${task.people_needed})`,
+                        claimsProgress: `${currentClaims + 1}/${task.people_needed}`
+                      });
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+// Get unread message count
+router.get('/api/messages/unread', isAuthenticated, (req, res) => {
+  db.get(
+    'SELECT COUNT(*) as unread_count FROM messages WHERE recipient_id = ? AND read = 0',
+    [req.user.id],
+    (err, result) => {
+      if (err) {
+        console.error('Error getting unread messages:', err);
+        return res.status(500).json({ error: 'Error fetching messages' });
+      }
+
+      res.json({ unread_count: result.unread_count });
+    }
+  );
+});
+
+// Get all messages for current user
+router.get('/api/messages', isAuthenticated, (req, res) => {
+  db.all(
+    `SELECT m.*, u.name as sender_name FROM messages m 
+     JOIN users u ON m.sender_id = u.id 
+     WHERE m.recipient_id = ? 
+     ORDER BY m.created_at DESC`,
+    [req.user.id],
+    (err, messages) => {
+      if (err) {
+        console.error('Error fetching messages:', err);
+        return res.status(500).json({ error: 'Error fetching messages' });
+      }
+
+      res.json({ messages: messages || [] });
+    }
+  );
+});
+
+// Mark message as read
+router.post('/api/messages/:id/read', isAuthenticated, (req, res) => {
+  const { id } = req.params;
+
+  db.run(
+    'UPDATE messages SET read = 1 WHERE id = ? AND recipient_id = ?',
+    [id, req.user.id],
+    (err) => {
+      if (err) {
+        console.error('Error marking message as read:', err);
+        return res.status(500).json({ error: 'Error updating message' });
+      }
+
+      res.json({ success: true });
+    }
+  );
+});
+
+// Delete message
+router.delete('/api/messages/:id', isAuthenticated, (req, res) => {
+  const { id } = req.params;
+
+  db.run(
+    'DELETE FROM messages WHERE id = ? AND recipient_id = ?',
+    [id, req.user.id],
+    (err) => {
+      if (err) {
+        console.error('Error deleting message:', err);
+        return res.status(500).json({ error: 'Error deleting message' });
+      }
+
+      res.json({ success: true });
+    }
+  );
+});
+
+// Get claims count for a task
+router.get('/api/tasks/:id/claims', isAuthenticated, (req, res) => {
+  const { id } = req.params;
+
+  db.get(
+    `SELECT 
+      (SELECT COUNT(*) FROM task_claims WHERE task_id = ?) as current_claims,
+      (SELECT people_needed FROM tasks WHERE id = ?) as people_needed
+     `,
+    [id, id],
+    (err, result) => {
+      if (err) {
+        console.error('Error getting claims:', err);
+        return res.status(500).json({ error: 'Error fetching task claims' });
+      }
+
+      if (!result) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      res.json({
+        current_claims: result.current_claims,
+        people_needed: result.people_needed
+      });
+    }
+  );
+});
+
+// Check if user has claimed a task
+router.get('/api/tasks/:id/user-claim', isAuthenticated, (req, res) => {
+  const { id } = req.params;
+
+  db.get(
+    'SELECT * FROM task_claims WHERE task_id = ? AND user_id = ?',
+    [id, req.user.id],
+    (err, claim) => {
+      if (err) {
+        console.error('Error checking claim:', err);
+        return res.status(500).json({ error: 'Error checking claim' });
+      }
+
+      res.json({ has_claimed: !!claim });
     }
   );
 });

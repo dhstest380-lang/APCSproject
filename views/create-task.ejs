@@ -21,6 +21,10 @@
                 <li><a href="/create-task" class="nav-link active">Create Task</a></li>
                 <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
                 <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/messages" class="nav-link messages-link" title="View messages">
+                    📬 Messages
+                    <span class="message-badge" id="messageBadge" style="display: none;"></span>
+                </a></li>
                 <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
             </ul>
         </div>
@@ -78,6 +82,32 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="address">Task Address *</label>
+                        <input 
+                            type="text" 
+                            id="address" 
+                            name="address" 
+                            placeholder="Where is this task located?"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="peopleNeeded">Number of People Needed *</label>
+                        <input 
+                            type="number" 
+                            id="peopleNeeded" 
+                            name="peopleNeeded" 
+                            placeholder="How many people do you need?"
+                            min="1"
+                            value="1"
+                            required
+                        >
+                    </div>
+                </div>
+
                 <div class="form-info">
                     <p><strong>Your Location:</strong> <%= user.city %></p>
                     <p class="text-muted">This task will be visible to people in <%= user.city %> and beyond.</p>
@@ -92,5 +122,25 @@
     </div>
 
     <script src="/js/create-task.js"></script>
+    <script>
+        // Update message badge
+        const messageBadge = document.getElementById('messageBadge');
+        async function updateMessageBadge() {
+            try {
+                const response = await fetch('/api/messages/unread');
+                const data = await response.json();
+                if (data.unread_count > 0) {
+                    messageBadge.textContent = data.unread_count;
+                    messageBadge.style.display = 'inline-block';
+                } else {
+                    messageBadge.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching unread messages:', error);
+            }
+        }
+        updateMessageBadge();
+        setInterval(updateMessageBadge, 30000);
+    </script>
 </body>
 </html>

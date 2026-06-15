@@ -22,6 +22,10 @@
                 <li><a href="/create-task" class="nav-link">Create Task</a></li>
                 <li><a href="/my-tasks" class="nav-link">My Tasks</a></li>
                 <li><a href="/profile" class="nav-link">Profile</a></li>
+                <li><a href="/messages" class="nav-link messages-link" title="View messages">
+                    📬 Messages
+                    <span class="message-badge" id="messageBadge" style="display: none;"></span>
+                </a></li>
                 <li><a href="/logout" class="nav-link logout-btn">Sign Out</a></li>
             </ul>
         </div>
@@ -76,8 +80,14 @@
                             <div class="task-meta">
                                 <span class="task-location">📍 <%= task.city %></span>
                                 <span class="task-creator">By <%= task.creator_name %></span>
+                                <span class="task-date">📅 <%= new Date(task.created_at).toLocaleDateString() %></span>
                             </div>
-                            <a href="/tasks/<%= task.id %>" class="btn btn-small">View Task</a>
+                            <div class="task-actions">
+                                <a href="/tasks/<%= task.id %>" class="btn btn-small">View Task</a>
+                                <button class="btn btn-claim btn-small" data-task-id="<%= task.id %>" title="Claim this task">
+                                    Claim <span class="claim-count">0/1</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="task-report">
