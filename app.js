@@ -44,145 +44,139 @@ app.use(require('./middleware/geolocation'));
 
 // Ensure the users table has a theme column
 const migrationDb = new sqlite3.Database(path.join(__dirname, 'database', 'app.db'));
-migrationDb.serialize(() => {
-  // First, create all tables if they don't exist
-  const createTablesSQL = `
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      password TEXT,
-      city TEXT NOT NULL,
-      country TEXT DEFAULT 'USA',
-      email_verified INTEGER DEFAULT 0,
-      google_id TEXT UNIQUE,
-      theme TEXT DEFAULT 'neutral',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
 
-    CREATE TABLE IF NOT EXISTS email_verifications (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      token TEXT UNIQUE NOT NULL,
-      expires_at DATETIME NOT NULL,
-      verified INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS tasks (
-      id TEXT PRIMARY KEY,
-      creator_id TEXT NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT,
-      category TEXT,
-      city TEXT NOT NULL,
-      pay REAL,
-      status TEXT DEFAULT 'open',
-      address TEXT,
-      people_needed INTEGER DEFAULT 1,
-      report_count INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(creator_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS task_reports (
-      id TEXT PRIMARY KEY,
-      task_id TEXT NOT NULL,
-      reporter_id TEXT NOT NULL,
-      reason TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(task_id) REFERENCES tasks(id),
-      FOREIGN KEY(reporter_id) REFERENCES users(id),
-      UNIQUE(task_id, reporter_id)
-    );
-  `;
-
-  migrationDb.exec(createTablesSQL, (err) => {
-    if (err) {
-      console.error('Error creating main tables:', err);
-    } else {
-      console.log('Main tables created or already exist');
-    }
-  });
-
-  // Check and add theme column to users if it doesn't exist
-  migrationDb.all("PRAGMA table_info(users)", (err, columns) => {
-    if (!err && columns && columns.length > 0) {
-      const hasTheme = columns.some(col => col.name === 'theme');
-      if (!hasTheme) {
-        migrationDb.run("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'neutral'", (alterErr) => {
-          if (alterErr) console.error('Theme column migration failed:', alterErr);
-          else console.log('Added theme column to users');
-        });
+function initializeDatabase() {
+  migrationDb.serialize(() => {
+    // Create users table
+    migrationDb.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        password TEXT,
+        city TEXT NOT NULL,
+        country TEXT DEFAULT 'USA',
+        email_verified INTEGER DEFAULT 0,
+        google_id TEXT UNIQUE,
+        theme TEXT DEFAULT 'neutral',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `, (err) => {
+      if (err && !err.message.includes('already exists')) {
+        console.error('Error creating users table:', err);
+      } else {
+        console.log('Users table ready');
       }
-    } else if (err) {
-      console.error('Error checking users table:', err);
-    }
-  });
+    });
 
-  // Add address and people_needed columns to tasks if they don't exist
-  migrationDb.all("PRAGMA table_info(tasks)", (err, columns) => {
-    if (!err && columns) {
-      const hasAddress = columns.some(col => col.name === 'address');
-      const hasPeopleNeeded = columns.some(col => col.name === 'people_needed');
-      
-      if (!hasAddress) {
-        migrationDb.run("ALTER TABLE tasks ADD COLUMN address TEXT", (alterErr) => {
-          if (alterErr) console.error('Address column migration failed:', alterErr);
-          else console.log('Added address column to tasks');
-        });
+    // Create email_verifications table
+    migrationDb.run(`
+      CREATE TABLE IF NOT EXISTS email_verifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        expires_at DATETIME NOT NULL,
+        verified INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      )
+    `, (err) => {
+      if (err && !err.message.includes('already exists')) {
+        console.error('Error creating email_verifications table:', err);
       }
-      
-      if (!hasPeopleNeeded) {
-        migrationDb.run("ALTER TABLE tasks ADD COLUMN people_needed INTEGER DEFAULT 1", (alterErr) => {
-          if (alterErr) console.error('People needed column migration failed:', alterErr);
-          else console.log('Added people_needed column to tasks');
-        });
+    });
+
+    // Create tasks table
+    migrationDb.run(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        creator_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        category TEXT,
+        city TEXT NOT NULL,
+        pay REAL,
+        status TEXT DEFAULT 'open',
+        address TEXT,
+        people_needed INTEGER DEFAULT 1,
+        report_count INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(creator_id) REFERENCES users(id)
+      )
+    `, (err) => {
+      if (err && !err.message.includes('already exists')) {
+        console.error('Error creating tasks table:', err);
       }
-    }
-  });
+    });
 
-  // Create task_claims table if it doesn't exist
-  migrationDb.run(`
-    CREATE TABLE IF NOT EXISTS task_claims (
-      id TEXT PRIMARY KEY,
-      task_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(task_id) REFERENCES tasks(id),
-      FOREIGN KEY(user_id) REFERENCES users(id),
-      UNIQUE(task_id, user_id)
-    )
-  `, (err) => {
-    if (err) console.error('Error creating task_claims table:', err);
-    else console.log('task_claims table ready');
-  });
+    // Create task_reports table
+    migrationDb.run(`
+      CREATE TABLE IF NOT EXISTS task_reports (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        reporter_id TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(task_id) REFERENCES tasks(id),
+        FOREIGN KEY(reporter_id) REFERENCES users(id),
+        UNIQUE(task_id, reporter_id)
+      )
+    `, (err) => {
+      if (err && !err.message.includes('already exists')) {
+        console.error('Error creating task_reports table:', err);
+      }
+    });
 
-  // Create messages table if it doesn't exist
-  migrationDb.run(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id TEXT PRIMARY KEY,
-      recipient_id TEXT NOT NULL,
-      sender_id TEXT NOT NULL,
-      task_id TEXT,
-      title TEXT NOT NULL,
-      content TEXT NOT NULL,
-      read INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(recipient_id) REFERENCES users(id),
-      FOREIGN KEY(sender_id) REFERENCES users(id),
-      FOREIGN KEY(task_id) REFERENCES tasks(id)
-    )
-  `, (err) => {
-    if (err) console.error('Error creating messages table:', err);
-    else console.log('messages table ready');
-  });
+    // Create task_claims table if it doesn't exist
+    migrationDb.run(`
+      CREATE TABLE IF NOT EXISTS task_claims (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(task_id) REFERENCES tasks(id),
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        UNIQUE(task_id, user_id)
+      )
+    `, (err) => {
+      if (err && !err.message.includes('already exists')) {
+        console.error('Error creating task_claims table:', err);
+      } else {
+        console.log('task_claims table ready');
+      }
+    });
 
-  migrationDb.close();
-});
+    // Create messages table if it doesn't exist
+    migrationDb.run(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        recipient_id TEXT NOT NULL,
+        sender_id TEXT NOT NULL,
+        task_id TEXT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        read INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(recipient_id) REFERENCES users(id),
+        FOREIGN KEY(sender_id) REFERENCES users(id),
+        FOREIGN KEY(task_id) REFERENCES tasks(id)
+      )
+    `, (err) => {
+      if (err && !err.message.includes('already exists')) {
+        console.error('Error creating messages table:', err);
+      } else {
+        console.log('messages table ready');
+      }
+    });
+
+    migrationDb.close();
+  });
+}
+
+// Initialize database on app start
+initializeDatabase();
 
 // Routes
 app.use('/auth', require('./routes/auth'));
