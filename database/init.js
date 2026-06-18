@@ -22,6 +22,7 @@ const createTablesSQL = `
     country TEXT DEFAULT 'USA',
     email_verified INTEGER DEFAULT 0,
     google_id TEXT UNIQUE,
+    theme TEXT DEFAULT 'neutral',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
