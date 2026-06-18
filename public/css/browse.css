@@ -83,6 +83,7 @@
     flex-direction: column;
     animation: fadeIn 0.3s ease;
     border: 1px solid var(--border-color);
+    position: relative;
 }
 
 @keyframes fadeIn {
@@ -158,29 +159,48 @@
 .task-footer {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 15px;
     border-top: 1px solid var(--border-color);
     padding-top: 15px;
+    min-height: 50px;
+    position: relative;
 }
 
 .task-meta {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     font-size: 12px;
     color: var(--muted-color);
-    flex: 1;
 }
 
 .task-location {
     font-weight: 600;
 }
 
-.btn-small {
-    padding: 8px 16px;
+.task-creator {
     font-size: 12px;
+}
+
+.task-date {
+    font-size: 11px;
+    color: var(--muted-color);
+    font-weight: 500;
     white-space: nowrap;
+    display: block;
+    margin-top: 3px;
+}
+
+.task-time {
+    font-size: 11px;
+    color: var(--muted-color);
+    font-weight: 600;
+    white-space: nowrap;
+    display: block;
+    text-align: right;
+    margin-top: 8px;
+    padding-top: 8px;
 }
 
 /* No Tasks */
@@ -273,9 +293,10 @@
 }
 
 .task-date {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--muted-color);
     font-weight: 500;
+    white-space: nowrap;
 }
 
 /* Message Badge */
@@ -307,13 +328,15 @@
 }
 
 .btn-claim:disabled {
-    background-color: #6c757d !important;
-    opacity: 0.65;
+    background-color: #999 !important;
+    color: white !important;
+    opacity: 1;
     cursor: not-allowed;
 }
 
 .claim-count {
-    display: inline-block;
-    margin-left: 5px;
+    display: block;
+    font-size: 10px;
     font-weight: 600;
+    margin-top: 2px;
 }

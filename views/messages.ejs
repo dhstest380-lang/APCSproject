@@ -12,14 +12,22 @@
             margin: 0 auto;
         }
 
-        .messages-header {
-            margin-bottom: 2rem;
-        }
-
         .messages-header h1 {
             font-size: 2rem;
             margin-bottom: 0.5rem;
             color: var(--text-primary, #333);
+        }
+
+        body[data-theme="dark"] .messages-header h1 {
+            color: #fff;
+        }
+
+        .messages-header {
+            margin-bottom: 2rem;
+        }
+
+        body[data-theme="dark"] .messages-header p {
+            color: #aaa;
         }
 
         .message-list {
@@ -70,9 +78,17 @@
             margin: 0;
         }
 
+        body[data-theme="dark"] .message-title {
+            color: #fff;
+        }
+
         .message-time {
             font-size: 0.85rem;
             color: var(--text-secondary, #666);
+        }
+
+        body[data-theme="dark"] .message-time {
+            color: #aaa;
         }
 
         .message-sender {
@@ -81,10 +97,18 @@
             margin-bottom: 0.75rem;
         }
 
+        body[data-theme="dark"] .message-sender {
+            color: #aaa;
+        }
+
         .message-content {
             color: var(--text-primary, #333);
             line-height: 1.6;
             margin-bottom: 1rem;
+        }
+
+        body[data-theme="dark"] .message-content {
+            color: #e0e0e0;
         }
 
         .message-footer {

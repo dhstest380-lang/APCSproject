@@ -55,12 +55,14 @@ router.post('/api/tasks', isAuthenticated, (req, res) => {
 router.get('/browse', isAuthenticated, (req, res) => {
   const city = req.query.city || req.user.city;
 
-  // Get tasks - city tasks first, then other cities
+  // Get tasks - city tasks first, then other cities, excluding tasks that are full
   db.all(
-    `SELECT t.*, u.name as creator_name 
+    `SELECT t.*, u.name as creator_name,
+            (SELECT COUNT(*) FROM task_claims WHERE task_id = t.id) as current_claims
      FROM tasks t 
      JOIN users u ON t.creator_id = u.id 
      WHERE t.status = 'open'
+     AND (SELECT COUNT(*) FROM task_claims WHERE task_id = t.id) < t.people_needed
      ORDER BY (CASE WHEN t.city = ? THEN 0 ELSE 1 END), t.created_at DESC`,
     [city],
     (err, tasks) => {
@@ -266,10 +268,6 @@ router.post('/api/tasks/:id/claim', isAuthenticated, (req, res) => {
         return res.status(404).json({ error: 'Task not found' });
       }
 
-      if (task.creator_id === req.user.id) {
-        return res.status(400).json({ error: 'You cannot claim your own task' });
-      }
-
       // Check if already claimed
       db.get(
         'SELECT * FROM task_claims WHERE task_id = ? AND user_id = ?',
@@ -324,10 +322,23 @@ router.post('/api/tasks/:id/claim', isAuthenticated, (req, res) => {
                         // Don't fail the claim, just log the error
                       }
 
+                      const newClaimCount = currentClaims + 1;
+                      const isTaskFull = newClaimCount >= task.people_needed;
+
+                      // If task is now full, update status to closed
+                      if (isTaskFull) {
+                        db.run('UPDATE tasks SET status = ? WHERE id = ?', ['closed', id], (updateErr) => {
+                          if (updateErr) {
+                            console.error('Error closing task:', updateErr);
+                          }
+                        });
+                      }
+
                       res.json({ 
                         success: true, 
-                        message: `Task claimed! (${currentClaims + 1}/${task.people_needed})`,
-                        claimsProgress: `${currentClaims + 1}/${task.people_needed}`
+                        message: `Task claimed! (${newClaimCount}/${task.people_needed})`,
+                        claimsProgress: `${newClaimCount}/${task.people_needed}`,
+                        taskFull: isTaskFull
                       });
                     }
                   );

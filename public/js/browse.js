@@ -52,7 +52,10 @@ async function setupClaimButtons() {
             const claimData = claimResponse.json();
             claimData.then(data => {
                 if (data.has_claimed) {
-                    btn.textContent = '✓ Claimed';
+                    const claimLabel = btn.querySelector('.claim-label');
+                    if (claimLabel) {
+                        claimLabel.textContent = 'Claimed';
+                    }
                     btn.disabled = true;
                 }
             });

@@ -330,13 +330,15 @@
 }
 
 .btn-claim:disabled {
-    background-color: #6c757d !important;
-    opacity: 0.65;
+    background-color: #999 !important;
+    color: white !important;
+    opacity: 1;
     cursor: not-allowed;
 }
 
 .claim-count {
-    display: inline-block;
-    margin-left: 5px;
+    display: block;
+    font-size: 10px;
     font-weight: 600;
+    margin-top: 2px;
 }

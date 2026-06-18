@@ -80,15 +80,21 @@
                             <div class="task-meta">
                                 <span class="task-location">📍 <%= task.city %></span>
                                 <span class="task-creator">By <%= task.creator_name %></span>
-                                <span class="task-date">📅 <%= new Date(task.created_at).toLocaleDateString() %></span>
+                                <span class="task-date" data-timestamp="<%= task.created_at %>" data-city="<%= task.city %>">
+                                    📅 <span class="date-display"></span>
+                                </span>
                             </div>
                             <div class="task-actions">
                                 <a href="/tasks/<%= task.id %>" class="btn btn-small">View Task</a>
                                 <button class="btn btn-claim btn-small" data-task-id="<%= task.id %>" title="Claim this task">
-                                    Claim <span class="claim-count">0/1</span>
+                                    <span class="claim-label">Claim</span><br><span class="claim-count">0/1</span>
                                 </button>
                             </div>
                         </div>
+
+                        <span class="task-time" data-timestamp="<%= task.created_at %>" data-city="<%= task.city %>">
+                            🕐 <span class="time-display"></span>
+                        </span>
 
                         <div class="task-report">
                             <button class="report-btn" data-task-id="<%= task.id %>" title="Report suspicious listing">
@@ -139,6 +145,73 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // City to timezone mapping
+        const cityTimezones = {
+            'Portland': 'America/Los_Angeles',
+            'Seattle': 'America/Los_Angeles',
+            'Los Angeles': 'America/Los_Angeles',
+            'San Francisco': 'America/Los_Angeles',
+            'New York': 'America/New_York',
+            'Boston': 'America/New_York',
+            'Chicago': 'America/Chicago',
+            'Denver': 'America/Denver',
+            'Phoenix': 'America/Phoenix',
+            'Las Vegas': 'America/Los_Angeles',
+            'Miami': 'America/New_York',
+            'Houston': 'America/Chicago',
+            'Dallas': 'America/Chicago',
+            'Austin': 'America/Chicago',
+            'San Diego': 'America/Los_Angeles',
+            'Atlanta': 'America/New_York'
+        };
+
+        function formatTaskDateTime(timestamp, city) {
+            const date = new Date(timestamp);
+            const timezone = cityTimezones[city] || 'America/Los_Angeles';
+            
+            // Format date with timezone
+            const dateOptions = {
+                timeZone: timezone,
+                month: 'short',
+                day: 'numeric'
+            };
+            
+            // Format time with timezone
+            const timeOptions = {
+                timeZone: timezone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            
+            const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(date);
+            const formattedTime = new Intl.DateTimeFormat('en-US', timeOptions).format(date);
+            
+            return { date: formattedDate, time: formattedTime };
+        }
+
+        // Apply formatting to date elements
+        document.querySelectorAll('.task-date').forEach(elem => {
+            const timestamp = elem.getAttribute('data-timestamp');
+            const city = elem.getAttribute('data-city');
+            const { date } = formatTaskDateTime(timestamp, city);
+            
+            const dateDisplay = elem.querySelector('.date-display');
+            if (dateDisplay) dateDisplay.textContent = date;
+        });
+
+        // Apply formatting to time elements
+        document.querySelectorAll('.task-time').forEach(elem => {
+            const timestamp = elem.getAttribute('data-timestamp');
+            const city = elem.getAttribute('data-city');
+            const { time } = formatTaskDateTime(timestamp, city);
+            
+            const timeDisplay = elem.querySelector('.time-display');
+            if (timeDisplay) timeDisplay.textContent = time;
+        });
+    </script>
 
     <script src="/js/browse.js"></script>
 </body>
